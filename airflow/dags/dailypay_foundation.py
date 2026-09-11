@@ -1,19 +1,29 @@
 """Базовый DAG-основа хранилища DailyPay.
 
-Каркас пайплайна: start → extract → load → end.
-Дальше в эти шаги можно подставлять MinIO, Postgres и реальные источники.
+Каркас пайплайна: start → extract (S3/MinIO) → load → end.
 """
 
+from __future__ import annotations
+
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 
+_SCRIPTS = Path("/opt/airflow/scripts")
+if not _SCRIPTS.exists():
+    _SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+
+from extract_s3 import extract_from_s3  # noqa: E402
+
 
 def extract(**context) -> dict:
-    # Заглушка извлечения. Следующий шаг: читать сырьё из MinIO / источника.
-    payload = {"source": "stub", "rows": 0, "ds": context["ds"]}
+    payload = extract_from_s3(logical_date=context["ds"])
     print(f"foundation extract: {payload}")
     return payload
 
@@ -27,7 +37,7 @@ def load(**context) -> str:
 
 with DAG(
     dag_id="dailypay_foundation",
-    description="Простой DAG-основа хранилища DailyPay",
+    description="Простой DAG-основа хранилища DailyPay с извлечением из S3",
     start_date=datetime(2026, 1, 1),
     schedule="@daily",
     catchup=False,
@@ -36,7 +46,7 @@ with DAG(
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["dailypay", "foundation"],
+    tags=["dailypay", "foundation", "s3"],
 ) as dag:
     start = EmptyOperator(task_id="start")
     extract_task = PythonOperator(task_id="extract", python_callable=extract)
