@@ -1,0 +1,113 @@
+version: 2
+
+models:
+  - name: spr_category
+    description: Справочник категорий
+    columns:
+      - name: category_id
+        tests:
+          - unique
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: category
+        tests:
+          - unique
+          - not_null
+  - name: spr_envelope
+    description: Справочник конвертов
+    columns:
+      - name: envelope_id
+        tests:
+          - unique
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: envelope
+        tests:
+          - unique
+          - not_null
+  - name: spr_payee
+    description: Справочник контрагентов
+    columns:
+      - name: payee_id
+        tests:
+          - unique
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: payee
+        tests:
+          - unique
+          - not_null
+  - name: stg_expense
+    description: Очищенный слой расходов
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "amount > 0"
+    columns:
+      - name: txn_date
+        tests: [not_null]
+      - name: amount
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                strictly: true
+      - name: payee_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('spr_payee')
+                field: payee_id
+      - name: category_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('spr_category')
+                field: category_id
+      - name: envelope_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('spr_envelope')
+                field: envelope_id
+  - name: stg_income
+    description: Очищенный слой доходов
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "amount > 0"
+    columns:
+      - name: txn_date
+        tests: [not_null]
+      - name: amount
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                strictly: true
+      - name: payee_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('spr_payee')
+                field: payee_id
+      - name: category_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('spr_category')
+                field: category_id
+      - name: envelope_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('spr_envelope')
+                field: envelope_id

@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: expense
+        description: Расходы из PDF MoneyPro
+      - name: income
+        description: Доходы из PDF MoneyPro
+
+  - name: stage
+    schema: stage
+    tables:
+      - name: spr_category
+      - name: spr_envelope
+      - name: spr_payee

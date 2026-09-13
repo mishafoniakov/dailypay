@@ -1,0 +1,4 @@
+minio
+pdfplumber
+pangres
+dbt-postgres==1.10.2
