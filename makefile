@@ -25,4 +25,4 @@ dbt-test:
 push:
 	git add .
 	git commit -m "$(MSG)"
-	git push origin main
+	git push origin HEAD:main
